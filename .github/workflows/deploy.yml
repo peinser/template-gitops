@@ -1,0 +1,59 @@
+name: Deploy
+run-name: ${{ github.actor }} is deploying the sample environment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+    - main
+    paths:
+    - environments/sample/**
+
+jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+        working-directory: ./environments/samle
+
+    steps:
+
+    - name: 'Git Checkout'
+      uses: actions/checkout@v3
+
+    - name: 'Configure & Install Helm'
+      uses: azure/setup-helm@v3
+
+    - name: Fetch Helm dependencies
+      run: |
+        helm dependency update
+
+    - name: 'Inject secrets into values.yaml'
+      shell: bash
+      run: |
+        sudo apt update && sudo apt-get install -y gettext-base # We require `envsubst`
+        envsubst < values.yaml > generated.yaml
+        mv generated.yaml values.yaml  # Replace
+        cat values.yaml  # No biggy, secrets are filtered in the output.
+
+        sleep 1  # Wait a second to flush the output.
+
+    - name: 'Configure & Install kubectl'
+      uses: azure/setup-kubectl@v3
+
+    - name: 'Release to Kubernetes'
+      run: |
+        kubectl config get-contexts
+        kubectl config set-context --current --namespace=adcs-acc
+
+        # Apply Helm upgrade
+        helm upgrade --install -n adcs-acc acc ./acc
+
+        # Give the API server some time to set things up.
+        sleep 10
+
+        # Some checks on the resources
+        kubectl get po
+        kubectl get deploy
+        kubectl get svc
+        kubectl get ing
