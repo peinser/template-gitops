@@ -1,0 +1,85 @@
+###############################################################################
+# Sample Infrastructure configuration
+#
+# Conventions:
+# -
+###############################################################################
+
+###############################################################################
+# Variables
+#
+# Global variables that will be reused throughout the chart. We use YAML
+# anchors as a mechanism to specify these with ease. In addition, we have
+# a set of YAML anchors that hold the image tag. From experience, we noticed
+# that this is an easy way to "release" applications manually to the next
+# environment instead of manually scanning through a large `value.yaml`.
+# Ultimately, the choice is up to you.
+###############################################################################
+
+variables:
+  secrets:
+    # Environment variable injected through `envsubst`, useful in CI/CD pipelines.
+    redis: &secretRedis "${REDIS_SECRET}"
+  tags:
+    component: &tagComponent "1.2.3"
+
+
+###############################################################################
+# Components
+#
+# Project subcharts are listed below.
+###############################################################################
+
+# Component ###################################################################
+
+component:
+  enabled: true
+
+  image:
+    tag: *tagComponent
+
+
+###############################################################################
+# Peripherals
+#
+# Below subcharts can be included that are sourced by the project developers
+# but rather from other publicly available Helm charts that this project
+# builds upon.
+###############################################################################
+
+# Redis #######################################################################
+
+redis:
+  enabled: true
+
+  architecture: standalone
+
+  auth:
+    enabled: true
+    password: *secretRedis
+
+  metrics: # Prometheus sidecar exporter
+    enabled: true
+
+  master:
+    kind: Deployment # Switch to statefulset whenever persistence is enabled
+
+    resources:
+      requests:
+        cpu: 64m
+        memory: 256Mi
+      limits:
+        memory: 2Gi
+
+    startupProbe:
+      enabled: true
+
+    persistence:
+      enabled: false
+
+
+###############################################################################
+# Custom
+#
+# TODO
+###############################################################################

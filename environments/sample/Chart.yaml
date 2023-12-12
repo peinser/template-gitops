@@ -1,0 +1,46 @@
+###############################################################################
+# Sample Infrastructure configuration
+#
+###############################################################################
+
+apiVersion: v2
+name: sample  # This should contain the name of the environment.
+description: A specification for the `sample` Kubernetes infrastructure.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.0.1
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version of the released application.
+# Said version could be defined in terms of a collection of applications, i.e., it could be tied
+# to a specific release version of a project. Individual components can have differing versions.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+appVersion: 0.0.1
+
+
+###############################################################################
+# Dependencies
+#
+# List the dependencies of the project below. The convention is to define
+# specific sub-components of the project in seperate subcharts. In addition,
+# the list of dependencies allows you the ability to specify peripherals such
+# as a database.
+###############################################################################
+
+dependencies:
+
+- name: my-component  # Identifier of the chart in the specified repository.
+  alias: component  # Optional chart alias to be used in values.yaml.
+  condition: component.enabled
+  version: 0.0.1  # Version of the subchart to use.
+  repository: oci://repository.tld/charts
+
+# Peripherals #################################################################
+- name: redis
+  condition: redis.enabled
+  version: 17.11.7
+  repository: oci://registry-1.docker.io/bitnamicharts
